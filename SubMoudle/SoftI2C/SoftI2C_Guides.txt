@@ -1,0 +1,37 @@
+*******************************************************************************
+*                               SoftI2C Guides                                *
+*******************************************************************************
+
+// SoftI2C 功能块头文件
+
+#include "SoftI2C.h"
+
+
+// SoftI2C 功能块的初始化                                                    
+
+I2C_Init();
+
+
+
+// SoftI2C 数据传输示例
+
+#define SLAVE_DEVICE_I2C_CH      0
+#define SLAVE_DEVICE_I2C_ADDR    0xD0
+
+
+
+uint8_t tx_buf[1] = {0x00};
+uint8_t rx_buf[7];
+uint8_t err = I2C_Trans(SLAVE_DEVICE_I2C_CH, SLAVE_DEVICE_I2C_ADDR, tx_buf, sizeof(tx_buf), rx_buf, sizeof(rx_buf), 3);
+if (err == I2C_ERR_NONE)
+{
+	// Success
+	// Your Code Here
+
+}
+else
+{
+	// Failed
+	// Your Code Here
+
+}

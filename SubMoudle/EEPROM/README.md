@@ -1,0 +1,14 @@
+## EEPROM Driver
+BaseOn SoftI2C  
+
+### supported device list:
+1. 24C02
+2. 24C04
+3. 24C08
+4. 24C16
+5. 24C32
+6. 24C64
+7. 24C128
+9. 24C256
+10. 24C512
+11. 24C1024

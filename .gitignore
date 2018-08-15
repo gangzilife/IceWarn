@@ -1,0 +1,14 @@
+[Dd]ebug/
+[Rr]elease/
+
+*.dep
+*.dbgdt
+*.dni
+*.wsdt
+*.wspos
+*.o
+
+*.cspy.bat
+*.general.xcl
+
+*.jlink
