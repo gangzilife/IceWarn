@@ -24,9 +24,9 @@
 
 #define CONNECT_ERR_CIPMODE		0x01
 #define CONNECT_ERR_CSTT		0x02
-#define CONNECT_ERR_CIICR		0x03
+#define CONNECT_ERR_NETOPEN		0x03
 #define CONNECT_ERR_CIFSR		0x04
-#define CONNECT_ERR_CIPSTART	0x05
+#define CONNECT_ERR_CIPOPEN 	0x05
 #define CONNECT_ERR_CIPSPRT		0x06
 #define CONNECT_ERR_AT			0x07
 #define CONNECT_ERR_ATE0		0x08
@@ -54,7 +54,6 @@
 
 
 
-extern  uint8_t Gsm_SendAndWait(uint8_t *cmd,uint8_t *strwait,uint8_t num_sema,uint8_t trynum,uint32_t timeout);
 //extern  uint8_t   Gsm_wait(uint8_t *strwait,uint8_t trynum,uint8_t timeout);
 //extern  uint8_t   Gsm_set(uint8_t *cmd);
 //extern  void      Gsm_csq(uint8_t* csq);
@@ -64,7 +63,7 @@ extern  void     Gsm_TurnON(void);
 ////extern  void    Gsm_RecvInit(void);
 //extern  uint8_t  Gsm_Init(void);
 //extern	uint8_t  Gsm_Send_data(uint8_t *s, uint32_t size);
-//extern	uint8_t  Gsm_Connect_Server(uint8_t *ip ,uint32_t port);
+extern	uint8_t  Gsm_Connect_Server(uint8_t *ip ,uint32_t port);
 //extern  uint16_t Gsm_Recv_data(uint8_t* buf, uint16_t size);
 //extern  uint8_t  Gsm_CloseConnect(void);
 ////AT

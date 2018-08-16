@@ -27,7 +27,7 @@ static void Gsm_RecvCmd(void)
 //返 回 值: 0:成功，1：失败
 //功能描述: 向SIM7600 发送AT命令，并等待数据回包
 //=============================================================
-uint8_t Gsm_SendAndWait(uint8_t *cmd,uint8_t *strwait,uint8_t num_sema,uint8_t trynum,uint32_t timeout)
+static uint8_t Gsm_SendAndWait(uint8_t *cmd,uint8_t *strwait,uint8_t num_sema,uint8_t trynum,uint32_t timeout)
 {
     char *p;
     BaseType_t seam_ret = pdFAIL;
@@ -46,13 +46,212 @@ uint8_t Gsm_SendAndWait(uint8_t *cmd,uint8_t *strwait,uint8_t num_sema,uint8_t t
             seam_ret = xSemaphoreTake( xSemaphore_4G,timeout);
             if(seam_ret != pdPASS)
                 return 1;
+            Gsm_RecvCmd();
+            p = strstr((char*)gprs_buf,(char*)"ERROR");
+            if(p)
+                return 1;
+            else
+            {
+                p = strstr((char*)gprs_buf,(char*)strwait);
+                if(p)
+                   return 0;
+            }
         }
-		Gsm_RecvCmd();
-		p = strstr((char*)gprs_buf,(char*)strwait);
-		if(p)
-		   return 0;
 	}
 	return 1; 
+}
+
+uint8_t get_csq(uint8_t *val)
+{
+    char *p;
+    uint8_t value = 0;
+    *val = value;
+    if(Gsm_SendAndWait((uint8_t *)"AT+CSQ\r\n",(uint8_t *)"+CSQ: ",1,RETRY_NUM,1000))
+        return 1;
+    p = strstr((char*)gprs_buf,(char*)"+CSQ:");
+    if(p)
+    {
+        value = atoi(p+6);
+    }
+    *val = value;
+    return 0;
+}
+
+static uint8_t Gsm_AT_CREG(uint8_t* stat)
+{
+	char *pst;
+
+	if(Gsm_SendAndWait((uint8_t *)"AT+CREG?\r\n",(uint8_t *)"+CREG: ",1,RETRY_NUM,1000))
+        return 1;
+    pst  = strstr((char*)gprs_buf,"+CREG: "); //+CREG: 0,1
+    *stat = atoi(pst+9);	
+	return 0 ;
+}
+
+
+static uint8_t Gsm_AT_CPSI(uint8_t* stat)
+{
+	char *pst , *psec;
+    char *p;
+
+    char buf[30] = {0};
+	if(Gsm_SendAndWait((uint8_t *)"AT+CPSI?\r\n",(uint8_t *)"+CPSI: ",1,RETRY_NUM,2000))
+        return 1;
+
+    pst  = strstr((char*)gprs_buf,"+CPSI: ");
+    psec  = strstr((char*)gprs_buf,",");
+    memcpy(buf,pst,psec - pst);	
+    p = strstr(buf,"NO SERVICE");
+    if(p)
+        *stat = 1;
+    else
+        *stat = 0;
+	
+	return 0 ;
+}
+
+//AT+CIPRXGET=1
+static uint8_t Gsm_AT_CIPRXGET(void)
+{
+	if(Gsm_SendAndWait((uint8_t *)"AT+CIPRXGET=1\r\n",(uint8_t *)"OK",1,RETRY_NUM,1000))
+        return 1;        
+	else
+        return 0 ;
+}
+
+
+//AT+NETOPEN=1
+static uint8_t Gsm_AT_NETOPEN(void)
+{
+    char *pst = NULL;
+    uint8_t value;
+	if(Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"+NETOPEN: ",2,RETRY_NUM,1500))
+    {
+        pst = strstr((char*)gprs_buf,"Network is already opened");
+        if(!pst)
+            return 1;
+        else
+            return 0;
+    }
+    else
+    {
+        pst = strstr((char*)gprs_buf,"+NETOPEN:");
+        value = atoi(pst+10);
+        return value;
+    }
+}
+
+static uint8_t Gsm_AT_CIPOPEN(uint8_t *ip ,uint32_t port,uint8_t channel)
+{
+    uint8_t inf[50];
+    sprintf((char*)inf,"AT+CIPOPEN=%d,\"TCP\",\"%s\",\"%d\"\r\n",channel,ip,port);	
+	if(Gsm_SendAndWait((uint8_t *)"AT+CIPOPEN\r\n",(uint8_t *)"OK",2,RETRY_NUM,1500))
+        return 1;
+    else
+        return 0;
+}
+
+////AT+CGSOCKCONT=1,"IP","CMNET"
+////AT+CSOCKSETPN=1
+static uint8_t Gsm_Stask_Spoint(uint8_t *point)
+{
+	uint8_t inf[50];
+	sprintf((char*)inf,"AT+CGSOCKCONT=1,\"IP\",\"%s\"\r\n",point);
+	if(!Gsm_SendAndWait(inf,(uint8_t *)"OK\r\n",1,RETRY_NUM,1000))
+        return  Gsm_SendAndWait((uint8_t *)"AT+CSOCKSETPN=1\r\n",(uint8_t *)"OK\r\n",1,RETRY_NUM,1000);
+    else
+        return 1;
+}
+
+static uint8_t Gsm_set_tcpip_app_mode(uint8_t type)
+{//TCPIP应用模式(0  非透传模式    1透传模式)
+	if(DEFAULT_TANS_MODE==type)
+	{
+		return	Gsm_SendAndWait((uint8_t *)"AT+CIPMODE=0\r\n",(uint8_t *)"OK\r\n",1,RETRY_NUM,1000);
+
+	}
+	return	Gsm_SendAndWait((uint8_t *)"AT+CIPMODE=1\r\n",(uint8_t *)"OK\r\n",1,RETRY_NUM,1000);
+}
+
+//关闭TCP/UDP连接  AT+CIPCLOSE
+uint8_t Gsm_shutdowm_tcp_udp()
+{
+    return Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"OK\r\n",2,RETRY_NUM,2000);
+}
+
+//关闭SOCKET  AT+NETCLOSE
+uint8_t Gsm_shutdowm_socket()
+{
+    return Gsm_SendAndWait((uint8_t *)"AT+NETCLOSE\r\n",(uint8_t *)"OK\r\n",2,RETRY_NUM,2000);
+}
+
+///***********************************************************************************
+//*连接服务器
+//***********************************************************************************/
+uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
+{
+ 	uint8_t csq;
+	uint8_t stat;
+
+	if(Gsm_SendAndWait((uint8_t *)"AT\r\n",(uint8_t *)"OK\r\n",1,1,1000))
+	{
+		return	CONNECT_ERR_AT; 
+	}
+
+    if(Gsm_SendAndWait((uint8_t *)"ATE0\r\n",(uint8_t *)"OK\r\n",1,1,1000))
+	{
+		return	CONNECT_ERR_ATE0; 
+	}
+    
+ 	//printf("关闭TCP/UDP连接 \r\n");	
+    Gsm_shutdowm_tcp_udp();
+    Gsm_shutdowm_socket();
+
+	if(Gsm_AT_CIPRXGET())  //手动接收字节
+	{
+	    return CONNECT_ERR_CIPRXGET;
+	}    
+
+ 	get_csq(&csq);
+
+
+	if(Gsm_AT_CREG(&stat))
+	{
+	    return CONNECT_ERR_CREG;	
+	}
+
+ 	
+	if(Gsm_AT_CPSI(&stat))
+	{
+	    return CONNECT_ERR_CPSI;	
+	}
+	
+
+    if(Gsm_set_tcpip_app_mode(0))
+    {
+        return CONNECT_ERR_CIPMODE;
+    }	
+				
+	
+    if(Gsm_Stask_Spoint((uint8_t *)"CMNET"))
+	{
+	    return CONNECT_ERR_CSTT;
+	}
+
+
+
+    if(Gsm_AT_NETOPEN())
+	{
+	    return CONNECT_ERR_NETOPEN;
+	}		
+
+
+    if(Gsm_AT_CIPOPEN(ip,port,DEFAULT_LINK_CHANNEL))
+    {
+            return CONNECT_ERR_CIPOPEN;
+    }
+	
+	return CONNECT_ERR_NONE;
 }
 
 //uint8_t Gsm_SendAndWait2(uint8_t *cmd,uint8_t *strwait,uint8_t *strwait2,uint8_t num_sema,uint8_t trynum,uint32_t timeout)
@@ -245,10 +444,10 @@ void Gsm_TurnON(void)
     vTaskDelay(pdMS_TO_TICKS(100));
     while(1)
     {
-        if(Gsm_SendAndWait((uint8_t *)"AT\r\n",(uint8_t *)"OK",1,1,1000))//如果之前关机，则现在开机
+        if(Gsm_SendAndWait((uint8_t *)"AT\r\n",(uint8_t *)"OK",1,2,1000))//如果之前关机，则现在开机
         {
             HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_RESET);
-            vTaskDelay(pdMS_TO_TICKS(500));
+            vTaskDelay(pdMS_TO_TICKS(600));
             HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
             vTaskDelay(pdMS_TO_TICKS(100));
             continue;
@@ -262,90 +461,7 @@ void Gsm_TurnON(void)
     }
 }
 //
-///***********************************************************************************
-//*连接服务器
-//***********************************************************************************/
-//uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
-//{
-// 	uint8_t csq;
-//	uint8_t stat;
-//
-//	if(Gsm_SendAndWait((uint8_t *)"AT\r\n",(uint8_t *)"OK\r\n",1,5))
-//	{
-//		return	CONNECT_ERR_AT; 
-//	}
-//
-//    if(Gsm_SendAndWait((uint8_t *)"ATE0\r\n",(uint8_t *)"OK\r\n",1,5))
-//	{
-//		return	CONNECT_ERR_ATE0; 
-//	}
-//    
-// 	//printf("关闭TCP/UDP连接 \r\n");	
-//    Gsm_shutdowm_tcp_udp();
-//
-//
-//	if(Gsm_set((uint8_t *)"AT+CIPRXGET=1\r\n"))  //手动接收字节
-//	{
-//	    return CONNECT_ERR_CIPRXGET;
-//	}    
-//
-// 	Gsm_csq(&csq);
-// 	//printf("GSM SIGNAL QUALITY REPORT : %d \r\n",csq);
-//	//AT+CSQ
-//
-//
-//
-//	//printf("NETWORK REGISTRATION \r\n");
-//	if(Gsm_AT_CREG(&stat))
-//	{
-//	    return CONNECT_ERR_CREG;	
-//	}
-//	//printf("REPORT: %d\r\n",stat);			
-//	//AT+CREG?
-// 	
-//	if(Gsm_AT_CPSI(&stat))
-//	{
-//	    return CONNECT_ERR_CPSI;	
-//	}
-//	
-//
-//    //printf("TCPIP应用模式(0  非透明模式    1透明模式 \r\n");
-//    if(Gsm_set_tcpip_app_mode(0))
-//    {
-//            return CONNECT_ERR_CIPMODE;
-//    }	
-//				
-//	
-//
-// 	//printf("启动任务并设置移动接入点 \r\n");
-//    if(Gsm_Stask_Spoint((uint8_t *)"CMNET"))
-//	{
-//	    return CONNECT_ERR_CSTT;
-//	}
-//
-//
-// 	//printf("激活移动场景 \r\n");
-//    if(Gsm_active_moving_scene())
-//	{
-//	    return CONNECT_ERR_CIICR;
-//	}		
-//
-// 	//printf("获取本地的IP \r\n");
-//    if(Gsm_get_local_ip())
-//	{
-//	    //return CONNECT_ERR_CIFSR;
-//	}
-//	
-//	
-//
-//    if(Gsm_Connect_Tcp_or_UdpPort(ip,port,DEFAULT_LINK_CHANNEL))
-//    {
-//            return CONNECT_ERR_CIPSTART;
-//    }
-//
-//	
-//	return CONNECT_ERR_NONE;
-//}
+
 //
 ///**************************************************************
 // *发送数据
