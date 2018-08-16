@@ -32,7 +32,7 @@ void vTaskCode( void * pvParameters )
     //EEPROM_Read(0, rbuf, sizeof(rbuf));
     BSP_LED_On(0);
     Gsm_TurnON();
-    cnt = Gsm_Connect_Server("218.244.156.4" ,68836);  //218.244.156.4",6886
+    cnt = Gsm_Connect_Server("218.244.156.4" ,6886);  //218.244.156.4",6886
     while(1)
     {
         

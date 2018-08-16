@@ -89,7 +89,7 @@ static uint8_t Gsm_AT_CREG(uint8_t* stat)
 }
 
 
-static uint8_t Gsm_AT_CPSI(uint8_t* stat)
+static uint8_t Gsm_AT_CPSI(void)
 {
 	char *pst , *psec;
     char *p;
@@ -103,10 +103,19 @@ static uint8_t Gsm_AT_CPSI(uint8_t* stat)
     memcpy(buf,pst,psec - pst);	
     p = strstr(buf,"NO SERVICE");
     if(p)
-        *stat = 1;
-    else
-        *stat = 0;
-	
+        return 1;
+    else	
+        return 0 ;
+}
+
+static uint8_t Gsm_AT_CGREG(uint8_t* stat)
+{
+	char *pst;
+
+	if(Gsm_SendAndWait((uint8_t *)"AT+CGREG?\r\n",(uint8_t *)"+CGREG: ",1,RETRY_NUM,1000))
+        return 1;
+    pst  = strstr((char*)gprs_buf,"+CGREG: "); //+CGREG: 0,1
+    *stat = atoi(pst+10);	
 	return 0 ;
 }
 
@@ -123,28 +132,16 @@ static uint8_t Gsm_AT_CIPRXGET(void)
 //AT+NETOPEN=1
 static uint8_t Gsm_AT_NETOPEN(void)
 {
-    char *pst = NULL;
-    uint8_t value;
-	if(Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"+NETOPEN: ",2,RETRY_NUM,1500))
-    {
-        pst = strstr((char*)gprs_buf,"Network is already opened");
-        if(!pst)
-            return 1;
-        else
-            return 0;
-    }
+	if(Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"+NETOPEN: 0",2,RETRY_NUM,2000))   
+        return 1;
     else
-    {
-        pst = strstr((char*)gprs_buf,"+NETOPEN:");
-        value = atoi(pst+10);
-        return value;
-    }
+        return 0;
 }
 
 static uint8_t Gsm_AT_CIPOPEN(uint8_t *ip ,uint32_t port,uint8_t channel)
 {
     uint8_t inf[50];
-    sprintf((char*)inf,"AT+CIPOPEN=%d,\"TCP\",\"%s\",\"%d\"\r\n",channel,ip,port);	
+    sprintf((char*)inf,"AT+CIPOPEN=%d,\"TCP\",\"%s\",%d\r\n",channel,ip,port);	
 	if(Gsm_SendAndWait((uint8_t *)"AT+CIPOPEN\r\n",(uint8_t *)"OK",2,RETRY_NUM,1500))
         return 1;
     else
@@ -221,12 +218,16 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
 	}
 
  	
-	if(Gsm_AT_CPSI(&stat))
+	if(Gsm_AT_CPSI())
 	{
 	    return CONNECT_ERR_CPSI;	
 	}
 	
-
+	if(Gsm_AT_CGREG(&stat))
+	{
+	    return CONNECT_ERR_CGREG;	
+	}
+    
     if(Gsm_set_tcpip_app_mode(0))
     {
         return CONNECT_ERR_CIPMODE;
@@ -440,7 +441,7 @@ void Gsm_TurnON(void)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
+    //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
     vTaskDelay(pdMS_TO_TICKS(100));
     while(1)
     {
@@ -454,7 +455,6 @@ void Gsm_TurnON(void)
         }
         else
         {
-            Gsm_SendAndWait((uint8_t *)"ATE0\r\n",(uint8_t *)"OK",1,1,1000);
             break;
         }
             
