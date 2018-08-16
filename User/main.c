@@ -27,7 +27,7 @@ void vTaskCode( void * pvParameters )
 //    float u = 0;
     
     uint8_t tbuf[18] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18};
-    //uint8_t rbuf[18] = {0};
+    uint8_t rbuf[256] = {0};
     //EEPROM_Write(0, tbuf, sizeof(tbuf));
     //EEPROM_Read(0, rbuf, sizeof(rbuf));
     BSP_LED_On(0);
@@ -37,9 +37,9 @@ void vTaskCode( void * pvParameters )
     {
         Gsm_Send_data(tbuf, sizeof(tbuf));
     }
+    int recv_len = 0;
     while(1)
-    {
-        
+    {        
         //BSP_LED_Toggle(0);
 //        tick = xTaskGetTickCount();
 //        ret = Get_Dewpoint(-14,70);
@@ -48,7 +48,16 @@ void vTaskCode( void * pvParameters )
 //        u = get_u();
 //        printf("tick = %d ,%.4f\n",xTaskGetTickCount() - tick,u);
 //        Pumb_Tx();
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        recv_len = Gsm_Recv_data(rbuf, sizeof(rbuf));
+        if(recv_len)
+        {
+            for(int i = 0 ; i < recv_len ; i++)
+            {
+                printf("%02X ",rbuf[i]);
+            }
+            printf("\n");
+        }
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
