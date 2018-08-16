@@ -132,7 +132,7 @@ static uint8_t Gsm_AT_CIPRXGET(void)
 //AT+NETOPEN
 static uint8_t Gsm_AT_NETOPEN(void)
 {
-	if(Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"+NETOPEN: 0",2,RETRY_NUM,2000))
+	if(Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"+NETOPEN: 0",2,RETRY_NUM,5000))
         return 1;
     else
         return 0;
@@ -142,7 +142,7 @@ static uint8_t Gsm_AT_CIPOPEN(uint8_t *ip ,uint32_t port,uint8_t channel)
 {
     uint8_t inf[50] = {0};
     sprintf((char*)inf,"AT+CIPOPEN=%d,\"TCP\",\"%s\",%d\r\n",channel,ip,port);	
-	if(Gsm_SendAndWait(inf,(uint8_t *)"OK",2,RETRY_NUM,3000))
+	if(Gsm_SendAndWait(inf,(uint8_t *)"+CIPOPEN:",2,RETRY_NUM,5000))
         return 1;
     else
         return 0;
@@ -173,11 +173,7 @@ static uint8_t Gsm_set_tcpip_app_mode(uint8_t type)
 //关闭TCP/UDP连接  AT+CIPCLOSE
 uint8_t Gsm_shutdowm_tcp_udp()
 {
-    if(Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"+CIPCLOSE:\r\n",2,RETRY_NUM,5000))
-    {
-        
-    }
-       
+    return Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"+CIPCLOSE:\r\n",2,RETRY_NUM,5000);
 }
 
 //关闭SOCKET  AT+NETCLOSE
@@ -205,7 +201,7 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
 	}
     
 
-    //Gsm_shutdowm_tcp_udp();
+    Gsm_shutdowm_tcp_udp();
     
     Gsm_shutdowm_socket();
 
@@ -260,6 +256,53 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
 	
 	return CONNECT_ERR_NONE;
 }
+
+uint8_t Gsm_wait(uint8_t *strwait,uint8_t num_sema,uint8_t trynum,uint32_t timeout)
+{
+    char *p;
+    BaseType_t seam_ret = pdFAIL;
+	for(int i = 0 ; i < trynum ; i++)
+	{
+        for(int i = 0 ; i < num_sema ; i++)
+        {
+            seam_ret = xSemaphoreTake( xSemaphore_4G,timeout);
+            if(seam_ret != pdPASS)
+                break;
+            Gsm_RecvCmd();
+            p = strstr((char*)gprs_buf,(char*)strwait);
+            if(p)
+                return 0;
+        }
+	}
+	return 1; 
+}
+
+/**************************************************************
+ *发送数据+CIPSEND: 0,5,5
+ *************************************************************/
+uint8_t Gsm_Send_data(uint8_t *buf, uint32_t size)
+{ 
+	uint8_t inf[50];
+
+	uint8_t channel = DEFAULT_LINK_CHANNEL;
+
+    sprintf((char*)inf,"AT+CIPSEND=%d,%d\r\n",channel,size);	
+
+
+	
+	if(Gsm_SendAndWait(inf,(uint8_t *)">",1,2,1000))
+	{
+		return CONNECT_ERR_CIPSEND;	
+	}
+
+	SIM7600_SendData(buf,size);	
+	
+	
+	Gsm_wait((uint8_t *)"+CIPSEND: DEFAULT_LINK_CHANNEL",1,3,1000);
+	
+	return CONNECT_ERR_NONE;
+}	
+
 
 //uint8_t Gsm_SendAndWait2(uint8_t *cmd,uint8_t *strwait,uint8_t *strwait2,uint8_t num_sema,uint8_t trynum,uint32_t timeout)
 //{
