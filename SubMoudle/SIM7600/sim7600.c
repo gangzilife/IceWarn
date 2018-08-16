@@ -267,7 +267,11 @@ void Gsm_TurnON(void)
             continue;
         }
         else
+        {
+            Gsm_SendAndWait((uint8_t *)"ATE0\r\n",(uint8_t *)"OK",1,1,1000);
             break;
+        }
+            
     }
 }
 //

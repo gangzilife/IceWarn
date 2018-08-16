@@ -8,7 +8,7 @@ extern SemaphoreHandle_t  xSemaphore_4G;
 static UART_HandleTypeDef huart1;
 static UART_HandleTypeDef huart2;
 TIM_HandleTypeDef htim2;
-#define UART_TIME_OUT  100   //串口超时时间
+#define UART_TIME_OUT  200   //串口超时时间
 
 static volatile uint16_t rx_index1 = 0;
 static uint8_t rx_buf1[256] = {0};

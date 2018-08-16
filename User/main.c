@@ -32,7 +32,7 @@ void vTaskCode( void * pvParameters )
     //EEPROM_Read(0, rbuf, sizeof(rbuf));
     BSP_LED_On(0);
     Gsm_TurnON();
-    Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"OK",2,2,2000);
+    cnt = Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"OK",2,2,2000);
     while(1)
     {
         
