@@ -140,12 +140,18 @@ static uint8_t Gsm_AT_NETOPEN(void)
 //AT+CIPOPEN=0,"TCP","218.244.156.4",6886
 static uint8_t Gsm_AT_CIPOPEN(uint8_t *ip ,uint32_t port,uint8_t channel)
 {
+    char* p;
+    uint8_t ret;
     uint8_t inf[50] = {0};
     sprintf((char*)inf,"AT+CIPOPEN=%d,\"TCP\",\"%s\",%d\r\n",channel,ip,port);	
 	if(Gsm_SendAndWait(inf,(uint8_t *)"+CIPOPEN:",2,RETRY_NUM,5000))
         return 1;
     else
-        return 0;
+    {
+        p = strstr((char*)gprs_buf,"+CIPOPEN:");
+        ret = atoi(p + 12);   
+        return ret;
+    }
 }
 
 ////AT+CGSOCKCONT=1,"IP","CMNET"
@@ -173,7 +179,8 @@ static uint8_t Gsm_set_tcpip_app_mode(uint8_t type)
 //关闭TCP/UDP连接  AT+CIPCLOSE
 uint8_t Gsm_shutdowm_tcp_udp()
 {
-    return Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"+CIPCLOSE:\r\n",2,RETRY_NUM,5000);
+    if(Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"+CIPCLOSE:\r\n",2,RETRY_NUM,5000))
+        return 
 }
 
 //关闭SOCKET  AT+NETCLOSE
@@ -208,7 +215,7 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
     
 
  	get_csq(&csq);
-    printf("csq = %d\n",csq);
+    printf("AT+CSQ csq = %d\n",csq);
     if(Gsm_set_tcpip_app_mode(0))
     {
         return CONNECT_ERR_CIPMODE;
@@ -344,7 +351,7 @@ static uint16_t Recv_data(uint8_t* buf, uint16_t size)
 	
 }
 
-uint16_t Gsm_Recv_data(uint8_t* buf, uint16_t size)
+int Gsm_Recv_data(uint8_t* buf, uint16_t size)
 {
     char* p;
     if(xSemaphoreTake( xSemaphore_4G,0) != pdPASS)
@@ -354,7 +361,14 @@ uint16_t Gsm_Recv_data(uint8_t* buf, uint16_t size)
     if(p)
         return Recv_data(buf, size);
     else
-        return 0;
+    {
+        p = strstr((char*)gprs_buf,(char*)"+IPCLOSE: "); //服务器端关闭连接，其实底层可以不用管，应用层根据心跳判断
+        if(p)
+            return -1;
+        else
+            return 0;
+    }
+        
 }
 
 

@@ -35,7 +35,7 @@ void vTaskCode( void * pvParameters )
     cnt = Gsm_Connect_Server("218.244.156.4" ,6886);  //218.244.156.4",6886
     if(!cnt)
     {
-        Gsm_Send_data(tbuf, sizeof(tbuf));
+        printf("connect ok\n");
     }
     int recv_len = 0;
     while(1)
@@ -49,7 +49,7 @@ void vTaskCode( void * pvParameters )
 //        printf("tick = %d ,%.4f\n",xTaskGetTickCount() - tick,u);
 //        Pumb_Tx();
         recv_len = Gsm_Recv_data(rbuf, sizeof(rbuf));
-        if(recv_len)
+        if(recv_len > 0)
         {
             for(int i = 0 ; i < recv_len ; i++)
             {
@@ -57,6 +57,8 @@ void vTaskCode( void * pvParameters )
             }
             printf("\n");
         }
+        else if(recv_len < 0)
+            printf("disconnect\n");
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
