@@ -2367,6 +2367,9 @@
     </group>
     <group>
       <name>Pumb</name>
+      <excluded>
+        <configuration>Debug</configuration>
+      </excluded>
       <file>
         <name>$PROJ_DIR$\..\SubMoudle\Pumb\pumb.c</name>
       </file>

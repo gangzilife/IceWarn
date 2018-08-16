@@ -1,14 +1,21 @@
 #include "bsp_usart.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 
-UART_HandleTypeDef huart2;
-UART_HandleTypeDef huart1;
+extern SemaphoreHandle_t  xSemaphore_4G;
+
+static UART_HandleTypeDef huart1;
+static UART_HandleTypeDef huart2;
+TIM_HandleTypeDef htim2;
+#define UART_TIME_OUT  100   //串口超时时间
 
 static volatile uint16_t rx_index1 = 0;
-static uint8_t rx_buf1[512] = {0};
+static uint8_t rx_buf1[256] = {0};
 
 
 static volatile uint16_t rx_index2 = 0;
-static uint8_t rx_buf2[512] = {0};
+static uint8_t rx_buf2[256] = {0};
 
 static void USART_Init(void)
 {
@@ -69,11 +76,26 @@ static void USART_Init(void)
     HAL_NVIC_EnableIRQ(USART2_IRQn);
 }
 
+static void TIM_Init(void)
+{
+    __HAL_RCC_TIM2_CLK_ENABLE();
+    htim2.Instance = TIM2;
+    htim2.Init.Prescaler = 8400 - 1; //定时器2再APB1总线上，时钟频率84MHz,分频都时钟为10K
+    htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim2.Init.Period = UART_TIME_OUT * 10 - 1;  //超时时间 200ms
+    htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+        assert(0);
 
+    __HAL_TIM_CLEAR_IT(&htim2, TIM_IT_UPDATE);
 
+    HAL_NVIC_SetPriority(TIM2_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);
+}
 void BSP_USART_Init(void)
 {
-    USART_Init();
+    USART_Init();  //初始化串口模块
+    TIM_Init();
 }
 
 void USART1_IRQHandler(void)
@@ -99,13 +121,38 @@ void USART2_IRQHandler(void)
 	tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_RXNE);
     if((tmp_flag != RESET) && (tmp_it_source != RESET))
     {
+        __HAL_TIM_SET_COUNTER(&htim2, 0);
+        if(rx_index2 == 0) //第一次接受数据，则打开定时器
+            HAL_TIM_Base_Start_IT(&htim2);
         rx_buf2[rx_index2++] = (uint8_t)(huart2.Instance->DR & (uint8_t)0x00FF);
         if(rx_index2 >= sizeof(rx_buf2))
         {
             rx_index2 = 0;
+            HAL_TIM_Base_Stop_IT(&htim2);
         }
     }
 }
+
+void TIM2_IRQHandler(void)
+{
+	HAL_TIM_IRQHandler(&htim2);
+}
+
+
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim->Instance == TIM2)
+	{
+        if(rx_index2 != 0)
+        {
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+            xSemaphoreGiveFromISR(xSemaphore_4G,&xHigherPriorityTaskWoken);
+        }
+        HAL_TIM_Base_Stop_IT(&htim2);
+	}
+}
+
 
 uint16_t USART1_Rx(uint8_t* buf,uint16_t len)
 {
@@ -146,6 +193,11 @@ uint16_t USART2_Rx(uint8_t* buf,uint16_t len)
     return ret;
 }
 
+void USART2_ClearBuf(void)
+{
+    memset(rx_buf2,0,sizeof(rx_buf2));
+    rx_index2 = 0;
+}
 
 void USART1_Tx(uint8_t* buf,uint16_t size)
 {

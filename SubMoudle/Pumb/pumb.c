@@ -111,6 +111,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         }
         HAL_TIM_Base_Stop_IT(&htim2);
 	}
+    else if(htim->Instance == TIM5)
+	{
+		if(rx_index_485 != 0) //驱动层收到了数据，将数据拷贝至应用层处理
+		{
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+            /*计算传感器数据*/
+            //xSemaphoreGive(xSemaphore_roadCondition);
+            xSemaphoreGiveFromISR(xSemaphore_roadCondition,&xHigherPriorityTaskWoken);
+			HAL_TIM_Base_Stop_IT(&htim2);
+		}
+	}
 }
 
 void Pumb_Tx(void)
