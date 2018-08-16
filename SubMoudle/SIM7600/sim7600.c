@@ -129,20 +129,20 @@ static uint8_t Gsm_AT_CIPRXGET(void)
 }
 
 
-//AT+NETOPEN=1
+//AT+NETOPEN
 static uint8_t Gsm_AT_NETOPEN(void)
 {
-	if(Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"+NETOPEN: 0",2,RETRY_NUM,2000))   
+	if(Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"+NETOPEN: 0",2,RETRY_NUM,2000))
         return 1;
     else
         return 0;
 }
-
+//AT+CIPOPEN=0,"TCP","218.244.156.4",6886
 static uint8_t Gsm_AT_CIPOPEN(uint8_t *ip ,uint32_t port,uint8_t channel)
 {
     uint8_t inf[50] = {0};
     sprintf((char*)inf,"AT+CIPOPEN=%d,\"TCP\",\"%s\",%d\r\n",channel,ip,port);	
-	if(Gsm_SendAndWait((uint8_t *)"AT+CIPOPEN\r\n",(uint8_t *)"OK",2,RETRY_NUM,3000))
+	if(Gsm_SendAndWait(inf,(uint8_t *)"OK",2,RETRY_NUM,3000))
         return 1;
     else
         return 0;
@@ -204,10 +204,7 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
     Gsm_shutdowm_tcp_udp();
     Gsm_shutdowm_socket();
 
-	if(Gsm_AT_CIPRXGET())  //手动接收字节
-	{
-	    return CONNECT_ERR_CIPRXGET;
-	}    
+    
 
  	get_csq(&csq);
 
@@ -217,10 +214,10 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
     }	
 				
 	
-    if(Gsm_Stask_Spoint((uint8_t *)"CMNET"))
-	{
-	    return CONNECT_ERR_CSTT;
-	} 
+//    if(Gsm_Stask_Spoint((uint8_t *)"CMNET"))
+//	{
+//	    return CONNECT_ERR_CSTT;
+//	} 
     
 	if(Gsm_AT_CREG(&stat))
 	{
@@ -239,7 +236,10 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
 	}
     
 
-
+	if(Gsm_AT_CIPRXGET())  //手动接收字节
+	{
+	    return CONNECT_ERR_CIPRXGET;
+	}
 
 
     if(Gsm_AT_NETOPEN())
