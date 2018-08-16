@@ -45,11 +45,11 @@ static uint8_t Gsm_SendAndWait(uint8_t *cmd,uint8_t *strwait,uint8_t num_sema,ui
         {
             seam_ret = xSemaphoreTake( xSemaphore_4G,timeout);
             if(seam_ret != pdPASS)
-                return 1;
+                break;
             Gsm_RecvCmd();
             p = strstr((char*)gprs_buf,(char*)"ERROR");
             if(p)
-                return 1;
+                break;
             else
             {
                 p = strstr((char*)gprs_buf,(char*)strwait);
@@ -140,9 +140,9 @@ static uint8_t Gsm_AT_NETOPEN(void)
 
 static uint8_t Gsm_AT_CIPOPEN(uint8_t *ip ,uint32_t port,uint8_t channel)
 {
-    uint8_t inf[50];
+    uint8_t inf[50] = {0};
     sprintf((char*)inf,"AT+CIPOPEN=%d,\"TCP\",\"%s\",%d\r\n",channel,ip,port);	
-	if(Gsm_SendAndWait((uint8_t *)"AT+CIPOPEN\r\n",(uint8_t *)"OK",2,RETRY_NUM,1500))
+	if(Gsm_SendAndWait((uint8_t *)"AT+CIPOPEN\r\n",(uint8_t *)"OK",2,RETRY_NUM,3000))
         return 1;
     else
         return 0;
@@ -211,7 +211,17 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
 
  	get_csq(&csq);
 
-
+    if(Gsm_set_tcpip_app_mode(0))
+    {
+        return CONNECT_ERR_CIPMODE;
+    }	
+				
+	
+    if(Gsm_Stask_Spoint((uint8_t *)"CMNET"))
+	{
+	    return CONNECT_ERR_CSTT;
+	} 
+    
 	if(Gsm_AT_CREG(&stat))
 	{
 	    return CONNECT_ERR_CREG;	
@@ -228,16 +238,7 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
 	    return CONNECT_ERR_CGREG;	
 	}
     
-    if(Gsm_set_tcpip_app_mode(0))
-    {
-        return CONNECT_ERR_CIPMODE;
-    }	
-				
-	
-    if(Gsm_Stask_Spoint((uint8_t *)"CMNET"))
-	{
-	    return CONNECT_ERR_CSTT;
-	}
+
 
 
 
