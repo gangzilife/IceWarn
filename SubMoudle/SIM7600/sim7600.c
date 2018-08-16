@@ -173,13 +173,17 @@ static uint8_t Gsm_set_tcpip_app_mode(uint8_t type)
 //关闭TCP/UDP连接  AT+CIPCLOSE
 uint8_t Gsm_shutdowm_tcp_udp()
 {
-    return Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"OK\r\n",2,RETRY_NUM,2000);
+    if(Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"+CIPCLOSE:\r\n",2,RETRY_NUM,5000))
+    {
+        
+    }
+       
 }
 
 //关闭SOCKET  AT+NETCLOSE
 uint8_t Gsm_shutdowm_socket()
 {
-    return Gsm_SendAndWait((uint8_t *)"AT+NETCLOSE\r\n",(uint8_t *)"OK\r\n",2,RETRY_NUM,2000);
+    return Gsm_SendAndWait((uint8_t *)"AT+NETCLOSE\r\n",(uint8_t *)"+NETCLOSE: 0\r\n",3,RETRY_NUM,5000);
 }
 
 ///***********************************************************************************
@@ -200,8 +204,9 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
 		return	CONNECT_ERR_ATE0; 
 	}
     
- 	//printf("关闭TCP/UDP连接 \r\n");	
-    Gsm_shutdowm_tcp_udp();
+
+    //Gsm_shutdowm_tcp_udp();
+    
     Gsm_shutdowm_socket();
 
     
@@ -214,10 +219,10 @@ uint8_t Gsm_Connect_Server(uint8_t *ip ,uint32_t port)
     }	
 				
 	
-//    if(Gsm_Stask_Spoint((uint8_t *)"CMNET"))
-//	{
-//	    return CONNECT_ERR_CSTT;
-//	} 
+    if(Gsm_Stask_Spoint((uint8_t *)"CMNET"))
+	{
+	    return CONNECT_ERR_CSTT;
+	} 
     
 	if(Gsm_AT_CREG(&stat))
 	{
