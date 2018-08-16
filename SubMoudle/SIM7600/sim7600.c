@@ -55,146 +55,133 @@ uint8_t Gsm_SendAndWait(uint8_t *cmd,uint8_t *strwait,uint8_t num_sema,uint8_t t
 	return 1; 
 }
 
-//uint8_t Gsm_SendAndWait2(uint8_t *cmd,uint8_t *strwait,uint8_t* strwait2,uint8_t trynum,uint8_t timeout)
+//uint8_t Gsm_SendAndWait2(uint8_t *cmd,uint8_t *strwait,uint8_t *strwait2,uint8_t num_sema,uint8_t trynum,uint32_t timeout)
 //{
-//    uint8_t   i ;
-//    
-//	char *p;
-//    
-//    const portTickType xDelay = (50*timeout) / portTICK_RATE_MS;
-//	xSemaphoreTake( xSemaphore_4G,portMAX_DELAY );
-//
-//	for(i=0;i<trynum;i++)
+//    char *p;
+//    BaseType_t seam_ret = pdFAIL;
+//	for(int i = 0 ; i < trynum ; i++)
 //	{
 //		//尝试发送
-//		Gsm_RecvInit();
+//		Gsm_RecvInit();        //清除缓冲区
+//		while(1)
+//		{
+//			if(xSemaphoreTake( xSemaphore_4G,0 ) != pdPASS)     //清除信号量
+//				break;
+//		}
 //		SIM7600_SendStr(cmd);
-//		vTaskDelay(xDelay);
-//		//首先处理从收的数据
+//        for(int i = 0 ; i < num_sema ; i++)
+//        {
+//            seam_ret = xSemaphoreTake( xSemaphore_4G,timeout);
+//            if(seam_ret != pdPASS)
+//                return 1;
+//        }
 //		Gsm_RecvCmd();
 //		p = strstr((char*)gprs_buf,(char*)strwait);
 //		if(p)
-//        {
-//		   xSemaphoreGive(xSemaphore_4G);
 //		   return 0;
-//        }
 //        else
 //        {
 //            p = strstr((char*)gprs_buf,(char*)strwait2);
 //            if(p)
-//            {
-//               xSemaphoreGive(xSemaphore_4G);
-//               return 0;
-//            }
+//                return 0;
 //        }
 //	}
-//	xSemaphoreGive(xSemaphore_4G);
 //	return 1; 
 //}
+////
+////uint8_t Gsm_wait(uint8_t *strwait,uint8_t trynum,uint8_t timeout)
+////{
+////    uint8_t   i;
+////	char *p;	
+////    
+////    const portTickType xDelay = (50*timeout) / portTICK_RATE_MS;
+////	xSemaphoreTake( xSemaphore_4G,portMAX_DELAY );
+////    
+////	for(i=0;i<trynum;i++)
+////	{
+////		vTaskDelay(xDelay);
+////        Gsm_RecvCmd();
+////		p = strstr((char*)gprs_buf,(char*)strwait);
+////		if(p)
+////		{
+////		   xSemaphoreGive(xSemaphore_4G);
+////		   return 0;
+////		}
+////	}
+////	xSemaphoreGive(xSemaphore_4G);
+////	return 1; 
+////}
+////
 //
-//uint8_t Gsm_wait(uint8_t *strwait,uint8_t trynum,uint8_t timeout)
-//{
-//    uint8_t   i;
-//	char *p;	
-//    
-//    const portTickType xDelay = (50*timeout) / portTICK_RATE_MS;
-//	xSemaphoreTake( xSemaphore_4G,portMAX_DELAY );
-//    
-//	for(i=0;i<trynum;i++)
-//	{
-//		vTaskDelay(xDelay);
-//        Gsm_RecvCmd();
-//		p = strstr((char*)gprs_buf,(char*)strwait);
-//		if(p)
-//		{
-//		   xSemaphoreGive(xSemaphore_4G);
-//		   return 0;
-//		}
-//	}
-//	xSemaphoreGive(xSemaphore_4G);
-//	return 1; 
-//}
-//
-//uint8_t Gsm_set(uint8_t *cmd)
-//{
-//	uint8_t result;
-//	result = Gsm_SendAndWait(cmd,(uint8_t *)"OK\r\n",RETRY_NUM,5);
-//	return result;
-//}
-//
-//
-//void Gsm_csq(uint8_t* csq)
-//{
-//	uint8_t   rst;
-//	char *pst;
-//	uint8_t   temp;
-//
-//	rst =Gsm_SendAndWait((uint8_t *)"AT+CSQ\r\n",(uint8_t *)"+CSQ: ",RETRY_NUM,1);
-//	if(!rst)
-//	{
-//		pst  = strstr((char*)gprs_buf,"+CSQ:");
-//		temp = atoi(pst+6);	
-//		*csq = temp;
-//	}
-//}
-//
+////
+////
+////void Gsm_csq(uint8_t* csq)
+////{
+////	uint8_t   rst;
+////	char *pst;
+////	uint8_t   temp;
+////
+////	rst =Gsm_SendAndWait((uint8_t *)"AT+CSQ\r\n",(uint8_t *)"+CSQ: ",RETRY_NUM,1);
+////	if(!rst)
+////	{
+////		pst  = strstr((char*)gprs_buf,"+CSQ:");
+////		temp = atoi(pst+6);	
+////		*csq = temp;
+////	}
+////}
+////
 ////关闭TCP/UDP连接  AT+CIPCLOSE
 //uint8_t Gsm_shutdowm_tcp_udp()
 //{
-//    return Gsm_set((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n");
+//    return Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"OK\r\n",2,RETRY_NUM,2000);
 //}
 //
 ////关闭SOCKET  AT+NETCLOSE
 //uint8_t Gsm_shutdowm_socket()
 //{
-//    return Gsm_set((uint8_t *)"AT+NETCLOSE\r\n");
+//    return Gsm_SendAndWait((uint8_t *)"AT+NETCLOSE\r\n",(uint8_t *)"OK\r\n",2,RETRY_NUM,2000);
 //}
-//
-//
-//
 //
 //static uint8_t Gsm_set_tcpip_app_mode(uint8_t type)
 //{//TCPIP应用模式(0  非透传模式    1透传模式)
 //	if(DEFAULT_TANS_MODE==type)
 //	{
-//		return	Gsm_SendAndWait((uint8_t *)"AT+CIPMODE=0\r\n",(uint8_t *)"OK\r\n",RETRY_NUM,1);
+//		return	Gsm_SendAndWait((uint8_t *)"AT+CIPMODE=0\r\n",(uint8_t *)"OK\r\n",1,RETRY_NUM,1000);
 //
 //	}
-//	return	Gsm_SendAndWait((uint8_t *)"AT+CIPMODE=1\r\n",(uint8_t *)"OK\r\n",RETRY_NUM,1);
+//	return	Gsm_SendAndWait((uint8_t *)"AT+CIPMODE=1\r\n",(uint8_t *)"OK\r\n",1,RETRY_NUM,1000);
 //}
 //
 //
-////AT+CGSOCKCONT=1,"IP","CMNET"
-////AT+CSOCKSETPN=1
+//////AT+CGSOCKCONT=1,"IP","CMNET"
+//////AT+CSOCKSETPN=1
 //static uint8_t Gsm_Stask_Spoint(uint8_t *point)
 //{
 //	uint8_t inf[50];
 //	sprintf((char*)inf,"AT+CGSOCKCONT=1,\"IP\",\"%s\"\r\n",point);
-//	if(!Gsm_SendAndWait(inf,(uint8_t *)"OK\r\n",RETRY_NUM,10))
-//        return  Gsm_SendAndWait((uint8_t *)"AT+CSOCKSETPN=1\r\n",(uint8_t *)"OK\r\n",RETRY_NUM,1);
+//	if(!Gsm_SendAndWait(inf,(uint8_t *)"OK\r\n",1,RETRY_NUM,1000))
+//        return  Gsm_SendAndWait((uint8_t *)"AT+CSOCKSETPN=1\r\n",(uint8_t *)"OK\r\n",1,RETRY_NUM,1000);
 //    else
 //        return 1;
 //
 //}
 //
 //
-//
 //static uint8_t Gsm_Connect_Tcp_or_UdpPort(uint8_t *ip ,uint32_t port,uint8_t channel)
 //{
 //	uint8_t inf[50];
 //
-//    
-//	
-//    if(Gsm_SendAndWait2((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"OK",(uint8_t *)"Network is already opened" ,RETRY_NUM,4))
+//   	
+//    if(Gsm_SendAndWait((uint8_t *)"AT+NETOPEN\r\n",(uint8_t *)"OK",(uint8_t *)"Network is already opened" ,RETRY_NUM,4))
 //        return 1;
 //    
 //    sprintf((char*)inf,"AT+CIPOPEN=%d,\"TCP\",\"%s\",\"%d\"\r\n",channel,ip,port);		
 //		
 //	return Gsm_SendAndWait(inf,(uint8_t *)"OK",RETRY_NUM,20);	
 //}
-//
-//
-//
+
+
+
 //static uint8_t Gsm_AT_CREG(uint8_t* stat)
 //{
 //	uint8_t   rst;
