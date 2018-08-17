@@ -314,7 +314,7 @@ uint8_t Gsm_Send_data(uint8_t *buf, uint32_t size)
 
 
 
-static uint16_t Recv_data(uint8_t* buf, uint16_t size)
+int Gsm_Recv_data(uint8_t* buf, uint16_t size)
 {
     uint8_t rst;
     uint16_t len=0;
@@ -332,14 +332,16 @@ static uint16_t Recv_data(uint8_t* buf, uint16_t size)
 	    {
             pst = strstr((char*)gprs_buf,"+CIPRXGET: 2");
             pst = pst+15;
-            len = atoi(pst);
-            cnlen = atoi(pst+3);	        
+            len = atoi(pst);  //本次获取的长度
+            cnlen = atoi(pst+3);	  //剩余长度
             if(len!=0)
             {            
                 //pst = strstr(pst,"0x0A"); 
                 pst = strchr(pst,'\n');
                 memcpy(buf+offset,pst+1,len);                  
                 offset += len;
+                if(len == size)
+                    break;
             }    
             vTaskDelay(pdMS_TO_TICKS(50));
         }
@@ -348,26 +350,25 @@ static uint16_t Recv_data(uint8_t* buf, uint16_t size)
 	
 }
 
-int Gsm_Recv_data(uint8_t* buf, uint16_t size)
-{
-    char* p;
-    if(xSemaphoreTake( xSemaphore_4G,0) != pdPASS)
-        return 0;
-    //Gsm_RecvInit();
-    Gsm_RecvCmd();
-    p = strstr((char*)gprs_buf,(char*)"+CIPRXGET: 1");
-    if(p)
-        return Recv_data(buf, size);
-    else
-    {
+//int Gsm_Recv_data(uint8_t* buf, uint16_t size)
+//{
+//    char* p;
+////    if(xSemaphoreTake( xSemaphore_4G,0) != pdPASS)
+////        return 0;
+//    //Gsm_RecvInit();
+//    Gsm_RecvCmd();     //把缓冲区数据全部收入
+//    p = strstr((char*)gprs_buf,(char*)"+CIPRXGET: 1");
+//    if(p)
+//        return Recv_data(buf, size);
+//    else
+//    {
 //        p = strstr((char*)gprs_buf,(char*)"+IPCLOSE: "); //服务器端关闭连接，其实底层可以不用管，应用层根据心跳判断
 //        if(p)
-//            return -1;
-//        else
-            return 0;
-    }
-        
-}
+//            printf("disconnrct from server\n");
+//        return 0;
+//    }
+//        
+//}
 
 
 /**************************************************************
