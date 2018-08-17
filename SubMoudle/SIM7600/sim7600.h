@@ -65,7 +65,7 @@ extern  void     Gsm_TurnON(void);
 extern	uint8_t  Gsm_Send_data(uint8_t *buf, uint32_t size);
 extern	uint8_t  Gsm_Connect_Server(uint8_t *ip ,uint32_t port);
 extern  int      Gsm_Recv_data(uint8_t* buf, uint16_t size);
-//extern  uint8_t  Gsm_CloseConnect(void);
+extern  uint8_t  Gsm_CloseConnect(void);
 ////AT
 
 

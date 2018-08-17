@@ -19,6 +19,13 @@
 #include "algorithm.h"
 #include "EEPROM.h"
 #include "pumb.h"
+
+
 #include "sim7600.h"
+
+
+#include "wizchip_conf.h"
+#include "dhcp.h"
+
 
 #endif

@@ -4,6 +4,7 @@
 #include  "bsp_led.h"
 #include  "bsp_can.h"
 #include  "bsp_usart.h"
+#include  "bsp_spi.h"
 #include  "stm32f4xx_hal.h"
 
 
@@ -30,4 +31,5 @@ void  BSP_Init (void)
     BSP_LED_Init();                                             /* Init LEDs.                                           */
     BSP_CAN_Init();
     BSP_USART_Init();
+    BSP_SPI_Init();
 }

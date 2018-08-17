@@ -10,6 +10,11 @@ static void Gsm_RecvInit(void)
 {
     memset(gprs_buf,0,sizeof(gprs_buf));
     USART2_ClearBuf();
+    while(1)
+    {
+        if(xSemaphoreTake( xSemaphore_4G,0 ) != pdPASS)     //清除信号量
+            break;
+    }
 }
 
 static void Gsm_RecvCmd(void)
@@ -30,21 +35,14 @@ static void Gsm_RecvCmd(void)
 static uint8_t Gsm_SendAndWait(uint8_t *cmd,uint8_t *strwait,uint8_t num_sema,uint8_t trynum,uint32_t timeout)
 {
     char *p;
-    BaseType_t seam_ret = pdFAIL;
 	for(int i = 0 ; i < trynum ; i++)
 	{
 		//尝试发送
 		Gsm_RecvInit();        //清除缓冲区
-		while(1)
-		{
-			if(xSemaphoreTake( xSemaphore_4G,0 ) != pdPASS)     //清除信号量
-				break;
-		}
 		SIM7600_SendStr(cmd);
         for(int i = 0 ; i < num_sema ; i++)
         {
-            seam_ret = xSemaphoreTake( xSemaphore_4G,timeout);
-            if(seam_ret != pdPASS)
+            if(xSemaphoreTake( xSemaphore_4G,timeout) != pdPASS)
                 break;
             Gsm_RecvCmd();
             p = strstr((char*)gprs_buf,(char*)"ERROR");
@@ -179,8 +177,7 @@ static uint8_t Gsm_set_tcpip_app_mode(uint8_t type)
 //关闭TCP/UDP连接  AT+CIPCLOSE
 uint8_t Gsm_shutdowm_tcp_udp()
 {
-    if(Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"+CIPCLOSE:\r\n",2,RETRY_NUM,5000))
-        return 
+    return Gsm_SendAndWait((uint8_t *)"AT+CIPCLOSE=DEFAULT_LINK_CHANNEL\r\n",(uint8_t *)"+CIPCLOSE:\r\n",2,RETRY_NUM,5000);
 }
 
 //关闭SOCKET  AT+NETCLOSE
@@ -309,7 +306,7 @@ uint8_t Gsm_Send_data(uint8_t *buf, uint32_t size)
 	SIM7600_SendData(buf,size);	
 	
 	
-	Gsm_wait((uint8_t *)"+CIPSEND: DEFAULT_LINK_CHANNEL",1,3,1000);
+	Gsm_wait((uint8_t *)"+CIPSEND: DEFAULT_LINK_CHANNEL",1,2,3000);
 	
 	return CONNECT_ERR_NONE;
 }	
@@ -356,16 +353,17 @@ int Gsm_Recv_data(uint8_t* buf, uint16_t size)
     char* p;
     if(xSemaphoreTake( xSemaphore_4G,0) != pdPASS)
         return 0;
+    //Gsm_RecvInit();
     Gsm_RecvCmd();
     p = strstr((char*)gprs_buf,(char*)"+CIPRXGET: 1");
     if(p)
         return Recv_data(buf, size);
     else
     {
-        p = strstr((char*)gprs_buf,(char*)"+IPCLOSE: "); //服务器端关闭连接，其实底层可以不用管，应用层根据心跳判断
-        if(p)
-            return -1;
-        else
+//        p = strstr((char*)gprs_buf,(char*)"+IPCLOSE: "); //服务器端关闭连接，其实底层可以不用管，应用层根据心跳判断
+//        if(p)
+//            return -1;
+//        else
             return 0;
     }
         
@@ -409,4 +407,14 @@ void Gsm_TurnON(void)
         }
             
     }
+}
+
+
+uint8_t  Gsm_CloseConnect(void)
+{
+    Gsm_shutdowm_tcp_udp();
+    printf("AT+CIPCLOSE=0\n");
+    
+    Gsm_shutdowm_socket();
+    printf("AT+NETCLOSE\n");    
 }

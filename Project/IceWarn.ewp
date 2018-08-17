@@ -183,6 +183,8 @@
           <name>CCDefines</name>
           <state>STM32F407xx</state>
           <state>USE_HAL_DRIVER</state>
+          <state>MQTT_TASK</state>
+          <state>_DHCP_DEBUG_</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -322,6 +324,11 @@
           <state>$PROJ_DIR$\..\SubMoudle\SoftI2C</state>
           <state>$PROJ_DIR$\..\SubMoudle\Pumb</state>
           <state>$PROJ_DIR$\..\SubMoudle\SIM7600</state>
+          <state>$PROJ_DIR$\..\SubMoudle\Ethernet</state>
+          <state>$PROJ_DIR$\..\SubMoudle\Ethernet\W5500</state>
+          <state>$PROJ_DIR$\..\SubMoudle\DHCP</state>
+          <state>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket</state>
+          <state>$PROJ_DIR$\..\SubMoudle\MQTT</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -1947,9 +1954,6 @@
     </file>
     <file>
       <name>$PROJ_DIR$\..\BSP\Src\bsp_spi.c</name>
-      <excluded>
-        <configuration>Debug</configuration>
-      </excluded>
     </file>
     <file>
       <name>$PROJ_DIR$\..\BSP\Src\bsp_usart.c</name>
@@ -2360,9 +2364,108 @@
       </file>
     </group>
     <group>
+      <name>DHCP</name>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DHCP\dhcp.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DHCP\dhcp.h</name>
+      </file>
+    </group>
+    <group>
       <name>EEPROM</name>
       <file>
         <name>$PROJ_DIR$\..\SubMoudle\EEPROM\EEPROM.c</name>
+      </file>
+    </group>
+    <group>
+      <name>Ethernet</name>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\Ethernet\socket.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\Ethernet\socket.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\Ethernet\W5500\w5500.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\Ethernet\W5500\w5500.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\Ethernet\wizchip_conf.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\Ethernet\wizchip_conf.h</name>
+      </file>
+    </group>
+    <group>
+      <name>MQTT</name>
+      <group>
+        <name>MQTTPacket</name>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTConnect.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTConnectClient.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTConnectServer.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTDeserializePublish.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTFormat.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTFormat.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTPacket.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTPacket.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTPublish.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTSerializePublish.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTSubscribe.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTSubscribeClient.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTSubscribeServer.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTUnsubscribe.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTUnsubscribeClient.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\MQTTUnsubscribeServer.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket\StackTrace.h</name>
+        </file>
+      </group>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\MQTT\mqtt_interface.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\MQTT\mqtt_interface.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTClient.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTClient.h</name>
       </file>
     </group>
     <group>
@@ -2379,6 +2482,12 @@
     </group>
     <group>
       <name>SIM7600</name>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\SIM7600\mqtt_gprs_interface.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\SIM7600\mqtt_gprs_interface.h</name>
+      </file>
       <file>
         <name>$PROJ_DIR$\..\SubMoudle\SIM7600\sim7600.c</name>
       </file>
@@ -2400,6 +2509,18 @@
     <name>User</name>
     <file>
       <name>$PROJ_DIR$\..\User\AppHook.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\User\eth.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\User\eth.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\User\gprs.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\User\gprs.h</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\User\includes.h</name>
