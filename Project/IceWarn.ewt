@@ -2875,13 +2875,7 @@
       <name>$PROJ_DIR$\..\User\eth.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\User\eth.h</name>
-    </file>
-    <file>
       <name>$PROJ_DIR$\..\User\gprs.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\User\gprs.h</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\User\includes.h</name>
@@ -2891,6 +2885,9 @@
     </file>
     <file>
       <name>$PROJ_DIR$\..\User\ReadMe.txt</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\User\weater.c</name>
     </file>
   </group>
 </project>

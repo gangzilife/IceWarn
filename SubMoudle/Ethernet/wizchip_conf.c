@@ -151,7 +151,7 @@ void 	wizchip_spi_writebyte(uint8_t wb)
 //void 	wizchip_spi_readburst(uint8_t* pBuf, uint16_t len) 	{}; 
 void 	wizchip_spi_readburst(uint8_t* pBuf, uint16_t len) 	
 {
-    HAL_SPI_Receive(&hspi1, pBuf, len, (len + 9)/ 10);
+    HAL_SPI_Receive(&hspi1, pBuf, len, (len + 99)/ 10);
 }
 
 /**
@@ -162,7 +162,7 @@ void 	wizchip_spi_readburst(uint8_t* pBuf, uint16_t len)
 //void 	wizchip_spi_writeburst(uint8_t* pBuf, uint16_t len) {};
 void 	wizchip_spi_writeburst(uint8_t* pBuf, uint16_t len) 
 {
-    HAL_SPI_Transmit(&hspi1, (uint8_t*)pBuf, len, (len + 9)/ 10);
+    HAL_SPI_Transmit(&hspi1, (uint8_t*)pBuf, len, (len + 99)/ 10);
 }
 
 
@@ -420,8 +420,8 @@ void wizchip_sw_reset(void)
    setMR(mr | MR_IND);
 #endif
 //
-   setSHAR(mac);
-   mac[0] = 0xFF;
+//   setSHAR(mac);
+//   mac[0] = 0xFF;
    getSHAR(mac);
    getGAR(gw);
    getSUBR(sn);  

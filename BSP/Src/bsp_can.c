@@ -11,19 +11,19 @@ static void MX_CAN1_Init(void)
 {
     hcan1.Instance = CAN1;
     hcan1.Init.Prescaler = 14;
-    hcan1.Init.Mode = CAN_MODE_LOOPBACK;
+    hcan1.Init.Mode = CAN_MODE_NORMAL;
     hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
     hcan1.Init.TimeSeg1 = CAN_BS1_4TQ;
     hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
     hcan1.Init.TimeTriggeredMode = DISABLE;
     hcan1.Init.AutoBusOff = DISABLE;
     hcan1.Init.AutoWakeUp = DISABLE;
-    hcan1.Init.AutoRetransmission = ENABLE;
+    hcan1.Init.AutoRetransmission = DISABLE;
     hcan1.Init.ReceiveFifoLocked = DISABLE;
     hcan1.Init.TransmitFifoPriority = DISABLE;
     if (HAL_CAN_Init(&hcan1) != HAL_OK)
         assert(0);
-    HAL_CAN_Start(&hcan1);
+    
 }
 
 /* CAN2 init function */
@@ -43,7 +43,7 @@ static void MX_CAN2_Init(void)
     hcan2.Init.TransmitFifoPriority = DISABLE;
     if (HAL_CAN_Init(&hcan2) != HAL_OK)
         assert(0);
-    HAL_CAN_Start(&hcan2);
+    
 }
 
 
@@ -152,9 +152,11 @@ static void CAN2_CANFilterConfig(void)
 void BSP_CAN_Init(void)
 {
     MX_CAN1_Init();
-    //MX_CAN2_Init();
+    MX_CAN2_Init();
     CAN1_CANFilterConfig();
-    //CAN2_CANFilterConfig();
+    CAN2_CANFilterConfig();
+    HAL_CAN_Start(&hcan1);
+    HAL_CAN_Start(&hcan2);
 }
 
 void CAN1_RX0_IRQHandler(void)
