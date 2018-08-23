@@ -2,28 +2,36 @@
 #include "MQTTClient.h"
 #include "wizchip_conf.h"
 #include "dhcp.h"
-
+#include "DataConv.h"
+#include "DataPub.h"
 #define DHCP_SOCKET   0                   //DHCP  socket,DHCP完成后会close
 
+
+static uint8_t eth_buf[256] = {0};
+static uint8_t eth_len = 0;
 static void messageArrived(MessageData* data)
 {
 //	printf("%.*s: %.*s\n", data->topicName->lenstring.len, data->topicName->lenstring.data,
 //           data->message->payloadlen, data->message->payload);
-    
+    //前六个字节 01 06 97 EC 00 00
     uint8_t* pdate = (uint8_t*)data->message->payload;
-    for(int i = 0 ; i < data->message->payloadlen ; i++)
+    memcpy(eth_buf,pdate,data->message->payloadlen);
+    eth_len = data->message->payloadlen;
+    for(int i = 0 ; i < eth_len ; i++)
     {
-        printf("%02X ",pdate[i]);
+        printf("%02X ",eth_buf[i]);
     }
-    printf("\r\n");
+    printf("\n");
+    parseNetMSG(eth_buf,eth_len);
 }
 
 /*DHCP所需要的缓冲区和IP缓存*/
 uint8_t ip[4] = {0};
 uint8_t dhcp_buf[1024] = {0};
+MQTTClient client;
 void vTaskCodeETH( void * pvParameters )
 {
-    MQTTClient client;
+    
     wizchip_init(NULL,NULL);
     DHCP_init(DHCP_SOCKET,dhcp_buf);    
     /*底层网线连接机制，如果网线没连接则不进行后续操作*/
@@ -47,7 +55,7 @@ void vTaskCodeETH( void * pvParameters )
             
 	Network network;
     
-	uint8_t sendbuf[80], readbuf[80];
+	uint8_t sendbuf[256], readbuf[256];
 	int rc = 0;
     
 	MQTTPacket_connectData connectData = MQTTPacket_connectData_initializer;
@@ -55,7 +63,9 @@ void vTaskCodeETH( void * pvParameters )
     NewNetwork(&network,1);
     MQTTClientInit(&client, &network, 3000,sendbuf, sizeof(sendbuf), readbuf, sizeof(readbuf));
 
-	uint8_t address[] = {192,168,0,142};   
+	//uint8_t address[] = {192,168,0,142};   
+    //char address[] = "114.55.56.64";
+    uint8_t address[] = {114,55,56,64};   
     while(1)
     {
         if ((rc = ConnectNetwork(&network, (char*)address, 1883)) != 1)
@@ -89,7 +99,7 @@ void vTaskCodeETH( void * pvParameters )
     }
 
 
-    char* sub = "sensor";
+    char* sub = "O/60568";
     while(1)
     {
         if ((rc = MQTTSubscribe(&client, sub, QOS0, messageArrived)) != 0)
@@ -122,8 +132,8 @@ void vTaskCodeETH( void * pvParameters )
         if(!client.isconnected)
         {
              printf("MQTT Disconnect,reconnecting!!!\n");//MQTT Disconnect,reconnect
-             
-        }        
-        vTaskDelay(pdMS_TO_TICKS(100));
+        }
+        Pub_Poll();
+        vTaskDelay(pdMS_TO_TICKS(50));
 	}
 }

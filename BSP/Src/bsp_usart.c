@@ -4,10 +4,13 @@
 #include "semphr.h"
 
 extern SemaphoreHandle_t  xSemaphore_4G;
+extern SemaphoreHandle_t  xSemaphore_weater;
 
 static UART_HandleTypeDef huart1;
 static UART_HandleTypeDef huart2;
-TIM_HandleTypeDef htim2;
+static TIM_HandleTypeDef  htim2;
+static TIM_HandleTypeDef  htim3;
+
 #define UART_TIME_OUT  200   //串口超时时间
 
 static volatile uint16_t rx_index1 = 0;
@@ -78,6 +81,7 @@ static void USART_Init(void)
 
 static void TIM_Init(void)
 {
+    /*定时器2，用于UART2的同步,接收4G模块信息*/
     __HAL_RCC_TIM2_CLK_ENABLE();
     htim2.Instance = TIM2;
     htim2.Init.Prescaler = 8400 - 1; //定时器2再APB1总线上，时钟频率84MHz,分频都时钟为10K
@@ -91,6 +95,21 @@ static void TIM_Init(void)
 
     HAL_NVIC_SetPriority(TIM2_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(TIM2_IRQn);
+    
+    /*定时器3，用于UART1的同步,接受气象站信息*/
+    __HAL_RCC_TIM3_CLK_ENABLE();
+    htim3.Instance = TIM3;
+    htim3.Init.Prescaler = 8400 - 1; //定时器3再APB1总线上，时钟频率84MHz,分频都时钟为10K
+    htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim3.Init.Period = UART_TIME_OUT * 10 - 1;  //超时时间 200ms
+    htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+        assert(0);
+
+    __HAL_TIM_CLEAR_IT(&htim3, TIM_IT_UPDATE);
+
+    HAL_NVIC_SetPriority(TIM3_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(TIM3_IRQn);
 }
 void BSP_USART_Init(void)
 {
@@ -105,10 +124,14 @@ void USART1_IRQHandler(void)
 	tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart1, UART_IT_RXNE);
     if((tmp_flag != RESET) && (tmp_it_source != RESET))
     {
+        __HAL_TIM_SET_COUNTER(&htim3, 0);
+        if(rx_index1 == 0) //第一次接受数据，则打开定时器
+            HAL_TIM_Base_Start_IT(&htim3);        
         rx_buf1[rx_index1++] = (uint8_t)(huart1.Instance->DR & (uint8_t)0x00FF);
         if(rx_index1 >= sizeof(rx_buf1))
         {
             rx_index1 = 0;
+            HAL_TIM_Base_Stop_IT(&htim3);
         }
     }
 }
@@ -138,7 +161,10 @@ void TIM2_IRQHandler(void)
 	HAL_TIM_IRQHandler(&htim2);
 }
 
-
+void TIM3_IRQHandler(void)
+{
+	HAL_TIM_IRQHandler(&htim3);
+}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -151,6 +177,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         }
         HAL_TIM_Base_Stop_IT(&htim2);
 	}
+    else if(htim->Instance == TIM3)
+    {
+        if(rx_index1 != 0)
+        {
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+            xSemaphoreGiveFromISR(xSemaphore_weater,&xHigherPriorityTaskWoken);
+        }
+        HAL_TIM_Base_Stop_IT(&htim3);        
+    }
+        
 }
 
 
@@ -197,6 +233,12 @@ void USART2_ClearBuf(void)
 {
     memset(rx_buf2,0,sizeof(rx_buf2));
     rx_index2 = 0;
+}
+
+void USART1_ClearBuf(void)
+{
+    memset(rx_buf1,0,sizeof(rx_buf1));
+    rx_index1 = 0;
 }
 
 void USART1_Tx(uint8_t* buf,uint16_t size)

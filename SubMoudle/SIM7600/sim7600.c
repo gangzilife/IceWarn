@@ -399,7 +399,7 @@ void Gsm_TurnON(void)
             HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_RESET);
             vTaskDelay(pdMS_TO_TICKS(600));
             HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
-            vTaskDelay(pdMS_TO_TICKS(100));
+            vTaskDelay(pdMS_TO_TICKS(200));
             continue;
         }
         else

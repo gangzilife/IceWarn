@@ -13,7 +13,10 @@ void vTaskCodeMain( void * pvParameters );
 
 /*UART2(4G串口)异步通知信号量*/
 SemaphoreHandle_t  xSemaphore_4G;  
+SemaphoreHandle_t  xSemaphore_weater;
 
+/*publish同步信号量*/
+SemaphoreHandle_t  xSemaphore_Pub;  
 
 int main(void)
 {
@@ -28,20 +31,27 @@ int main(void)
     BaseType_t err = xTaskCreate( vTaskCodeMain,"Main",130,NULL,2,&xHandleMain );
     assert(err == pdPASS);
 
-//	TaskHandle_t xHandleGprs;
-//    err = xTaskCreate( vTaskCodeGPRS,"gprs",256,NULL,2,&xHandleGprs );
-//    assert(err == pdPASS);
-//
+	TaskHandle_t xHandleGprs;
+    err = xTaskCreate( vTaskCodeGPRS,"gprs",512,NULL,2,&xHandleGprs );
+    assert(err == pdPASS);
+
 	TaskHandle_t xHandleWeater;
-    err = xTaskCreate( vTaskCodeWeater,"Weater",130,NULL,2,&xHandleWeater );
+    err = xTaskCreate( vTaskCodeWeater,"Weater",256,NULL,2,&xHandleWeater );
     assert(err == pdPASS);
 
     TaskHandle_t xEnternetHandle;
-    err = xTaskCreate( vTaskCodeETH,"EnternetMQTT",256,NULL,3,&xEnternetHandle);
+    err = xTaskCreate( vTaskCodeETH,"EnternetMQTT",512,NULL,3,&xEnternetHandle);
     assert(err == pdPASS);
     
     xSemaphore_4G = xSemaphoreCreateCounting( 20, 0 );
     assert(xSemaphore_4G != NULL);
+    
+    xSemaphore_weater = xSemaphoreCreateBinary();
+    assert(xSemaphore_weater != NULL);
+
+    xSemaphore_Pub = xSemaphoreCreateBinary();
+    assert(xSemaphore_Pub != NULL);
+    
     vTaskStartScheduler();
 	return 0;
 }

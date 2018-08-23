@@ -1,11 +1,13 @@
 #include "MQTTClient.h"
 #include "sim7600.h"
 #include "mqtt_gprs_interface.h"
+#include "DataConv.h"
+#include "DataPub.h"
 #include <assert.h>
 
 
 volatile SemaphoreHandle_t xGprsMutex;
-static uint8_t gprs_buf[128] = {0};
+static uint8_t gprs_buf[256] = {0};
 static uint8_t gprs_len = 0;
 /* MQTT服务器推送的消息 */
 static void messageArrived(MessageData* data)
@@ -21,6 +23,7 @@ static void messageArrived(MessageData* data)
         printf("%02X ",gprs_buf[i]);
     }
     printf("\n");
+    parseNetMSG(gprs_buf,gprs_len);
 }
 
 
@@ -37,7 +40,7 @@ void vTaskCodeGPRS( void * pvParameters )
 
 	Network gprs_network;
     
-	uint8_t sendbuf[80], readbuf[80];
+	uint8_t sendbuf[256], readbuf[256];
 	int rc = 0;
 
 	MQTTPacket_connectData connectData = MQTTPacket_connectData_initializer;
@@ -79,7 +82,7 @@ void vTaskCodeGPRS( void * pvParameters )
     }
     printf("mqtt connect success!\n");
 
-    char* str = "sensor";
+    char* str = "O/60568";
 
     while(1)
     {
@@ -108,6 +111,7 @@ void vTaskCodeGPRS( void * pvParameters )
 //            HAL_NVIC_SystemReset();
             
         }
+        Pub_Poll();
         vTaskDelay(pdMS_TO_TICKS(50));
 	}
 }

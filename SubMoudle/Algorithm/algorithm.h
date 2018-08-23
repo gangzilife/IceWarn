@@ -19,4 +19,13 @@ extern float get_u(void);
 
 extern float Get_Dewpoint(float temp,float humi);
 
+
+/*********************************************************************/
+
+
+int InitRoadCondModule(void);
+int AddDataToRoadCond(float value);
+void SetDataNum_RoadCond(int num);
+int GetDataNum_RoadCond(void);
+unsigned char RoadCond_Ice(void);
 #endif

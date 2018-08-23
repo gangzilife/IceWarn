@@ -2719,6 +2719,21 @@
       </file>
     </group>
     <group>
+      <name>DataProcess</name>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DataProcess\DataConv.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DataProcess\DataConv.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DataProcess\DataPub.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DataProcess\DataPub.h</name>
+      </file>
+    </group>
+    <group>
       <name>Debug</name>
       <file>
         <name>$PROJ_DIR$\..\SubMoudle\Debug\debug.c</name>

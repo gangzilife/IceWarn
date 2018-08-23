@@ -328,6 +328,7 @@
           <state>$PROJ_DIR$\..\SubMoudle\DHCP</state>
           <state>$PROJ_DIR$\..\SubMoudle\MQTT\MQTTPacket</state>
           <state>$PROJ_DIR$\..\SubMoudle\MQTT</state>
+          <state>$PROJ_DIR$\..\SubMoudle\DataProcess</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -2351,6 +2352,21 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\SubMoudle\Algorithm\algorithm.h</name>
+      </file>
+    </group>
+    <group>
+      <name>DataProcess</name>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DataProcess\DataConv.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DataProcess\DataConv.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DataProcess\DataPub.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\SubMoudle\DataProcess\DataPub.h</name>
       </file>
     </group>
     <group>
